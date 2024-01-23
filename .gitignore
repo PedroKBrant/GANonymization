@@ -130,8 +130,13 @@ dmypy.json
 # Others
 data/
 output/
+dataset/
+results/
 logs/
 .idea
 *.pth
 *.ckpt
 *.onnx
+*.jpg
+*.jpeg
+*.png
