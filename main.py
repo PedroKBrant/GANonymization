@@ -23,6 +23,7 @@ from lib.transform import transform, FacialLandmarks478, FaceCrop, FaceSegmentat
     Pix2PixTransformer
 from lib.utils import glob_dir, get_last_ckpt, move_files
 
+
 SEED = 42
 
 
@@ -172,10 +173,13 @@ def anonymize_directory(model_file: str, input_directory: str, output_directory:
     @param align: Whether to align the image based on the facial orientation.
     @param device: The device to run the process on.
     """
-    for file in os.listdir(input_directory):
-        anonymize_image(model_file, file, os.path.join(output_directory, os.path.basename(file)), img_size, align,
+    files_list = os.listdir(input_directory)
+    # Print the number of files in the directory
+    print(f"Number of files in {input_directory}: {len(files_list)}")
+    for file in files_list:
+        file_path = os.path.join(input_directory, file)
+        anonymize_image(model_file, file_path, os.path.join(output_directory, os.path.basename(file_path)), img_size, align,
                         device)
-
 
 if __name__ == '__main__':
     fire.Fire()
