@@ -150,16 +150,29 @@ def anonymize_image(model_file: str, input_file: str, output_file: str, img_size
     @param align: Whether to align the image based on the facial orientation.
     @param device: The device to run the process on.
     """
-    img = cv2.imread(input_file)
-    transform = torchvision.transforms.Compose([
-        FaceCrop(align, False),
-        ZeroPaddingResize(img_size),
-        FacialLandmarks478(),
-        Pix2PixTransformer(model_file, img_size, device)
-    ])
-    transformed_img = transform(img)
-    os.makedirs(os.path.dirname(output_file), exist_ok=True)
-    save_image(transformed_img, output_file, normalize=True)
+    try:
+        # Read the input image
+        img = cv2.imread(input_file)
+
+        if img is not None:
+            # Apply transformations
+            transform = torchvision.transforms.Compose([
+                FaceCrop(align, False),
+                ZeroPaddingResize(img_size),
+                FacialLandmarks478(),
+                Pix2PixTransformer(model_file, img_size, device)
+            ])
+            transformed_img = transform(img)
+
+            # Save the transformed image
+            os.makedirs(os.path.dirname(output_file), exist_ok=True)
+            save_image(transformed_img, output_file, normalize=True)
+
+        else:
+            print(f"Error: Unable to read the image from {input_file}")
+
+    except Exception as e:
+        print(f"An error occurred while processing {input_file}: {e}")
 
 
 def anonymize_directory(model_file: str, input_directory: str, output_directory: str, img_size: int = 512,
