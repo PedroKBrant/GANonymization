@@ -22,7 +22,7 @@ from lib.trainer import setup_torch_device, setup
 from lib.transform import transform, FacialLandmarks478, FaceCrop, FaceSegmentation, ZeroPaddingResize, \
     Pix2PixTransformer
 from lib.utils import glob_dir, get_last_ckpt, move_files
-
+from tqdm import tqdm
 
 SEED = 42
 
@@ -176,7 +176,7 @@ def anonymize_directory(model_file: str, input_directory: str, output_directory:
     files_list = os.listdir(input_directory)
     # Print the number of files in the directory
     print(f"Number of files in {input_directory}: {len(files_list)}")
-    for file in files_list:
+    for file in tqdm(files_list, desc="Anonymizing images", unit="image"):
         file_path = os.path.join(input_directory, file)
         anonymize_image(model_file, file_path, os.path.join(output_directory, os.path.basename(file_path)), img_size, align,
                         device)
