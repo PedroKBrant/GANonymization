@@ -66,8 +66,8 @@ def preprocess(input_path: str, img_size: int = 512, align: bool = True, test_si
 
 
 def train_pix2pix(data_dir: str, log_dir: str, models_dir: str, output_dir: str, dataset_name: str, epoch: int = 0,
-                  n_epochs: int = 200, batch_size: int = 1, lr: float = 0.0002, b1: float = 0.5, b2: float = 0.999,
-                  n_cpu: int = 2, img_size: int = 256, checkpoint_interval: int = 500, device: int = 0):
+                  n_epochs: int = 100, batch_size: int = 16, lr: float = 0.0002, b1: float = 0.5, b2: float = 0.999,
+                  n_cpu: int = 8, img_size: int = 512, checkpoint_interval: int = 22000, device: int = 0):
     """
     Train the pix2pix GAN for generating faces based on given landmarks.
     @param data_dir: The root path to the data folder.
@@ -90,9 +90,11 @@ def train_pix2pix(data_dir: str, log_dir: str, models_dir: str, output_dir: str,
     setup_torch_device(device, SEED)
     ckpt_file = get_last_ckpt(models_dir)
     resume_ckpt = None
+    #ckpt_file = None
     if ckpt_file is not None:
-        resume_ckpt = os.path.join(models_dir, ckpt_file)
-        model = Pix2Pix.load_from_checkpoint(resume_ckpt)
+        #resume_ckpt = os.path.join(models_dir, ckpt_file)
+        print("load checkpoint ", ckpt_file)
+        model = Pix2Pix.load_from_checkpoint(ckpt_file)
     else:
         model = Pix2Pix(data_dir, models_dir, output_dir, n_epochs, dataset_name, batch_size, lr, b1,
                         b2, n_cpu, img_size, device)
