@@ -33,15 +33,21 @@ def exec(files: List[str], output_dir: str, input_dir: str, size: int, gallery: 
         sub_output_dir = os.path.join(output_dir, *sub_path_image.split(os.sep))
         img = cv2.imread(image_file)
         if img is not None:
-            pred = transformer(img)
-            for idx, sub_pred in enumerate(pred):
-                sub_pred = ZeroPaddingResize(size)(sub_pred)
+            if name == "FaceSegmentation" or name == "FacialLandmarks478":
+                pred = transformer(img)
                 os.makedirs(sub_output_dir, exist_ok=True)
-                output_file = os.path.join(sub_output_dir, f'{name}_{idx}-{pathlib.Path(image_file).name}')
-                if gallery:
-                    cv2.imwrite(output_file, cv2.hconcat([img, sub_pred]))
-                else:
-                    cv2.imwrite(output_file, sub_pred)
+                output_file = os.path.join(sub_output_dir, f'{name}-{pathlib.Path(image_file).name}')
+                cv2.imwrite(output_file, pred)
+            else:  
+                pred = transformer(img)
+                for idx, sub_pred in enumerate(pred):
+                    sub_pred = ZeroPaddingResize(size)(sub_pred)
+                    os.makedirs(sub_output_dir, exist_ok=True)
+                    output_file = os.path.join(sub_output_dir, f'{name}_{idx}-{pathlib.Path(image_file).name}')
+                    if gallery:
+                        cv2.imwrite(output_file, cv2.hconcat([img, sub_pred]))
+                    else:
+                        cv2.imwrite(output_file, sub_pred)
     return 0
 
 
