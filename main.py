@@ -29,6 +29,7 @@ from lib.transform.facial_landmarks_478_transformer import FacialLandmarks478
 from lib.transform.pix2pix_transformer import Pix2PixTransformer
 from lib.utils import glob_dir, get_last_ckpt, move_files
 from tqdm import tqdm
+from tqdm import tqdm
 
 SEED = 42
 
