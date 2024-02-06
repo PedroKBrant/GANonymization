@@ -1,0 +1,7 @@
+python main.py train_pix2pix --data_dir lib/datasets/ --log_dir logs/ --models_dir baseline/ --output_dir results/ --dataset_name celeba_splitted/FaceSegmentation/
+
+train_02_02_epoch_16.ckpt
+
+python main.py anonymize_directory --model_file lib/models/baseline/baseline.ckpt --input_directory lib/datasets/celeba_splitted/original/train/  --output_directory results/celeba/
+
+python main.py anonymize_image --model_file lib/models/baseline/train_02_02_epoch_16.ckpt --input_file test_data/1.jpg --output_file test_data/1_02_02_test.jpg
