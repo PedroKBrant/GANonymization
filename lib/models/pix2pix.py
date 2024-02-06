@@ -180,7 +180,7 @@ class Pix2Pix(pytorch_lightning.LightningModule):
         self.n_cpu = n_cpu
         self.img_size = img_size
 
-        self.out_dir = os.path.join(output_dir, dataset_name)
+        self.out_dir = os.path.join(self.output_dir, dataset_name)
         os.makedirs(self.out_dir, exist_ok=True)
 
         self.transforms_ = [
