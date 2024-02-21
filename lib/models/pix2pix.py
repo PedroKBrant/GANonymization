@@ -262,7 +262,7 @@ class Pix2Pix(pytorch_lightning.LightningModule):
             fake_b = self.generator(real_a)
             img_sample = torch.cat((real_b.data, real_a.data, fake_b.data), -2)
             save_image(img_sample,
-                       os.path.join(self.out_dir, f'{self.current_epoch}-{self.global_step}.png'),
+                       os.path.join(self.output_dir, f'{self.current_epoch}-{self.global_step}.png'),
                        nrow=5, normalize=True)
             grid = make_grid(img_sample, nrow=5, normalize=True)
             self.logger.experiment.add_image('images', grid, self.global_step)
