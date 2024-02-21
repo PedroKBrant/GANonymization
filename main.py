@@ -8,6 +8,7 @@ import shutil
 
 import cv2
 import fire
+import numpy as np
 import pandas as pd
 import pytorch_lightning
 from loguru import logger
@@ -31,6 +32,12 @@ from lib.utils import glob_dir, get_last_ckpt, move_files
 
 SEED = 42
 
+def normalize_image(img):
+    img = img.squeeze()
+    img = cv2.cvtColor(img.transpose((1, 2, 0)), cv2.COLOR_RGB2BGR)
+    img = (img - np.min(img)) / (np.max(img) - np.min(img))
+    img = (img*255).astype(np.uint8)
+    return img
 
 def preprocess(input_path: str, img_size: int = 512, align: bool = True, test_size: float = 0.1,
                shuffle: bool = True, output_dir: str = None, num_workers: int = 8):
@@ -174,6 +181,7 @@ def anonymize_image(model_file: str, input_file: str, output_file: str, img_size
         img = FacialLandmarks478()(img)
         img = Pix2PixTransformer(model_file, img_size, device)(img)
         os.makedirs(os.path.dirname(output_file), exist_ok=True)
+        img = normalize_image(img)
         cv2.imwrite(output_file, img)
 
 
