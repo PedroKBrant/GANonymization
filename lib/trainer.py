@@ -78,7 +78,7 @@ def setup(model: LightningModule, log_dir: str, models_dir: str, num_epoch: int,
                                         max_epochs=num_epoch,
                                         val_check_interval=checkpoint_interval,
                                         log_every_n_steps=1,
-                                        detect_anomaly=True)
+                                        detect_anomaly=False)
     logger.info(
         f'Train {model_name} for {num_epoch} epochs and save logs under {tb_logger.log_dir} '
         f'and models under {models_dir}')
