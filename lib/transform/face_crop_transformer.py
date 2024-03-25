@@ -24,7 +24,12 @@ class FaceCrop:
         @param pic (numpy.ndarray): Image to be converted to cropped faces.
         @return: List[numpy.ndarray]: Converted image.
         """
-        return [i[:, :, ::-1] for i in RetinaFace.extract_faces(pic, align=self.align)]
+        faces = RetinaFace.extract_faces(pic, align=self.align)
+        if faces is not None:
+            return [i[:, :, ::-1] for i in faces]
+        else:
+            return None
+
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}"
