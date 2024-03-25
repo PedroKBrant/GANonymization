@@ -25,6 +25,35 @@ class FacialLandmarks478:
             if results.multi_face_landmarks is not None and len(results.multi_face_landmarks) > 0:
                 face_landmarks = results.multi_face_landmarks[0]
 
+                # Draw face landmarks
+                mp.solutions.drawing_utils.draw_landmarks(
+                    image=point_image,
+                    landmark_list=face_landmarks,
+                    landmark_drawing_spec=mp.solutions.drawing_utils.DrawingSpec(color=(255, 255, 255), thickness=1,
+                                                                                circle_radius=0))
+                # Draw iris landmarks at the middle of the eye
+                if results.multi_face_landmarks[0].landmark:
+                    left_eye_top_index = 468
+                    right_eye_top_index = 473
+
+                    left_eye_top = face_landmarks.landmark[left_eye_top_index]
+                    right_eye_top = face_landmarks.landmark[right_eye_top_index]
+                    left_eye_top_x = int(left_eye_top.x * pic.shape[1])
+                    left_eye_top_y = int(left_eye_top.y * pic.shape[0])
+                    right_eye_top_x = int(right_eye_top.x * pic.shape[1])
+                    right_eye_top_y = int(right_eye_top.y * pic.shape[0])
+
+                    # Draw iris landmarks at the middle of the eye
+                    cv2.circle(point_image, (left_eye_top_x, left_eye_top_y), 10, (255,0,0), -1)
+                    cv2.circle(point_image, (right_eye_top_x, right_eye_top_y), 10, (255,0,0), -1)
+ 
+            return point_image
+
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}"
+
+
+'''
                 # mp.solutions.drawing_utils.draw_landmarks(
                 #     image=point_image,
                 #     landmark_list=face_landmarks,
@@ -40,16 +69,12 @@ class FacialLandmarks478:
                     landmark_drawing_spec=None,
                     connection_drawing_spec=mp.solutions.drawing_styles
                     .get_default_face_mesh_contours_style())
-                
-                mp.solutions.drawing_utils.draw_landmarks(
-                    image=point_image,
-                    landmark_list=face_landmarks,
-                    connections=mp.solutions.face_mesh.FACEMESH_IRISES,
-                    landmark_drawing_spec=None,
-                    connection_drawing_spec=mp.solutions.drawing_styles
-                    .get_default_face_mesh_iris_connections_style())
-            
-        return point_image
 
-    def __repr__(self) -> str:
-        return f"{self.__class__.__name__}"
+                # mp.solutions.drawing_utils.draw_landmarks(
+                #     image=point_image,
+                #     landmark_list=face_landmarks,
+                #     connections=mp.solutions.face_mesh.FACEMESH_IRISES,
+                #     landmark_drawing_spec=None,
+                #     connection_drawing_spec=mp.solutions.drawing_styles
+                #     .get_default_face_mesh_iris_connections_style())
+'''
