@@ -77,14 +77,21 @@ def preprocess(input_path: str, img_size: int = 512, align: bool = True, test_si
                            num_workers=num_workers)
     output_dir = transform(output_dir, img_size, False, FaceSegmentation(),
                            num_workers=num_workers)
+    #output_dir ='lib/datasets/CelebA/celeba/img/FaceSegmentation/'
+    #output_dir = 'lib/datasets/CelebA/celeba/img/FaceSegmentation'
     output_dir = transform(output_dir, img_size, True, FacialLandmarks478(),
                            num_workers=num_workers)
 
+'''
 
+The dataset_name should contain the folder with the images concatenating landmarks on left and segmented face on the right
+Command example
+python main.py train_pix2pix --data_dir lib/datasets/CelebA/celeba/img/ --log_dir logs/ --models_dir lib/models/ --output_dir results/15_02/ --dataset_name FacialLandmarks478/ 
+'''
 def train_pix2pix(data_dir: str, log_dir: str, models_dir: str, output_dir: str, dataset_name: str,
                   epoch: int = 0, n_epochs: int = 100, batch_size: int = 32, lr: float = 0.0002,
                   b1: float = 0.5, b2: float = 0.999, n_cpu: int = 8, img_size: int = 512,
-                  checkpoint_interval: int = 5800, device: int = 0):
+                  checkpoint_interval: int = 5493, device: int = 0):
     """
     Train the pix2pix GAN for generating faces based on given landmarks.
     @param data_dir: The root path to the data folder.
@@ -103,9 +110,9 @@ def train_pix2pix(data_dir: str, log_dir: str, models_dir: str, output_dir: str,
     @param checkpoint_interval: interval between model checkpoints.
     @param device: The device to run the task on (e.g., device >= 0: cuda; device=-1: cpu).
     """
-    logger.info(f"Parameters: {', '.join([f'{key}: {value}' for key, value in locals().items()])}")
-    setup_torch_device(device, SEED)
-    ckpt_file = get_last_ckpt(models_dir)
+    logger.info(f"Parameters: {', '.join([f'{key}: {value}' for key, value in locals().items()])}")# useful prints
+    setup_torch_device(device, SEED)# use GPU and allows reproducibility by using a fixed seed
+    ckpt_file = get_last_ckpt(models_dir)# resume training
     resume_ckpt = None
     out_dir = os.path.join(output_dir, dataset_name)
     os.makedirs(out_dir, exist_ok=True)
@@ -116,7 +123,7 @@ def train_pix2pix(data_dir: str, log_dir: str, models_dir: str, output_dir: str,
     else:
         model = Pix2Pix(data_dir, models_dir, out_dir, n_epochs, dataset_name, batch_size, lr, b1,
                         b2, n_cpu, img_size, device)
-    trainer = setup(model, log_dir, models_dir, n_epochs, device,
+    trainer = setup(model, log_dir, models_dir, n_epochs, device, 
                     checkpoint_interval=checkpoint_interval)
     trainer.fit(model, ckpt_path=resume_ckpt)
 
@@ -175,14 +182,19 @@ def anonymize_image(model_file: str, input_file: str, output_file: str, img_size
     @param device: The device to run the process on.
     """
     img = cv2.imread(input_file)
+    print(input_file)
     if img is not None:
-        img = FaceCrop(align)(img)[0]
-        img = ZeroPaddingResize(img_size)(img)
-        img = FacialLandmarks478()(img)
-        img = Pix2PixTransformer(model_file, img_size, device)(img)
-        os.makedirs(os.path.dirname(output_file), exist_ok=True)
-        img = normalize_image(img)
-        cv2.imwrite(output_file, img)
+        img = FaceCrop(align)(img)
+        if len(img) > 0:
+            img = img[0]
+            img = ZeroPaddingResize(img_size)(img)
+            img = FacialLandmarks478()(img)
+            img = Pix2PixTransformer(model_file, img_size, device)(img)
+            os.makedirs(os.path.dirname(output_file), exist_ok=True)
+            img = normalize_image(img)
+            cv2.imwrite(output_file, img)
+        else:
+            print("no face")
 
 
 def anonymize_directory(model_file: str, input_directory: str, output_directory: str,
@@ -201,6 +213,10 @@ def anonymize_directory(model_file: str, input_directory: str, output_directory:
         output_file = os.path.join(output_directory, os.path.basename(file))
         anonymize_image(model_file, input_file, output_file, img_size, align, device)
 
+def custom_preprocess(input_path: str, img_size: int = 512, align: bool = True, test_size: float = 0.1,
+               shuffle: bool = True, output_dir: str = None, num_workers: int = 8):
+    output_dir = transform(input_path+'FaceSegmentation', img_size, True, FacialLandmarks478(),output_dir=input_path+'FacialLandmarks478',
+                        num_workers=num_workers)
 
 if __name__ == '__main__':
     fire.Fire()

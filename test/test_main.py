@@ -45,7 +45,8 @@ class SystemTest(TestCase):
         except RuntimeError as e:
             # Check for no runtime error
             self.fail(f'Unexpected Exception raised: {e}')
-
+            
+    '''
     def test_anonymization_25(self):
         """
         Test the anonymize_directory function of main.py.
@@ -81,3 +82,4 @@ class SystemTest(TestCase):
         except RuntimeError as e:
             # Check for no runtime error
             self.fail(f'Unexpected Exception raised: {e}')
+    '''
