@@ -12,6 +12,18 @@ from tqdm import tqdm
 from lib.transform.zero_padding_resize_transformer import ZeroPaddingResize
 from lib.utils import glob_dir
 
+def check_dimensions(images):
+    # Get dimensions of the first image
+    rows, cols, channels = images[0].shape
+
+    # Check dimensions of all images
+    for img in images[1:]:
+        if img.shape != (rows, cols, channels):
+            return True
+    return False
+
+def resize_to_match(image, target_image):
+    return cv2.resize(image, (target_image.shape[1], target_image.shape[0]))
 
 def exec_augmentation(files: List[str], output_dir: str, input_dir: str, size: int, gallery: bool,
                       transformer):
@@ -24,6 +36,7 @@ def exec_augmentation(files: List[str], output_dir: str, input_dir: str, size: i
     @param gallery: Whether the image should be saved besides its original.
     @param transformer: The transformer to be applied.
     """
+    logger.info(f"Parameters: {', '.join([f'{key}: {value}' for key, value in locals().items()])}")
     name = str(transformer)
     for image_file in files:
         sub_path_image = os.path.dirname(image_file[len(input_dir):])
@@ -39,6 +52,8 @@ def exec_augmentation(files: List[str], output_dir: str, input_dir: str, size: i
                 output_file = os.path.join(sub_output_dir,
                                            f'{name}_{idx}-{pathlib.Path(image_file).name}')
                 if gallery:
+                    if check_dimensions([img, sub_pred]) and img.dtype == sub_pred.dtype:
+                        img = resize_to_match(img, sub_pred)
                     cv2.imwrite(output_file, cv2.hconcat([img, sub_pred]))
                 else:
                     cv2.imwrite(output_file, sub_pred)
@@ -57,6 +72,7 @@ def transform(input_dir: str, size: int, gallery: bool, transformer,
     @param num_workers: The number of parallel workers.
     @return: The output path.
     """
+    logger.info(f"Parameters: {', '.join([f'{key}: {value}' for key, value in locals().items()])}")
     name = str(transformer)
     if output_dir is None:
         output_dir = os.path.dirname(input_dir)

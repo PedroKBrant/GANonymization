@@ -215,7 +215,8 @@ def anonymize_directory(model_file: str, input_directory: str, output_directory:
 
 def custom_preprocess(input_path: str, img_size: int = 512, align: bool = True, test_size: float = 0.1,
                shuffle: bool = True, output_dir: str = None, num_workers: int = 8):
-    output_dir = transform(input_path+'FaceSegmentation', img_size, True, FacialLandmarks478(),output_dir=input_path+'FacialLandmarks478',
+    output_dir = input_path+'/FaceSegmentation'
+    output_dir = transform(output_dir, img_size, True, FacialLandmarks478(),
                         num_workers=num_workers)
 
 if __name__ == '__main__':
