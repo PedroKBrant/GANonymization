@@ -7,6 +7,22 @@ circleDrawingSpec = mp.solutions.drawing_utils.DrawingSpec(thickness=1, circle_r
 LEFT_IRIS = [474,475, 476, 477]
 RIGHT_IRIS = [469, 470, 471, 472]
 
+# Left eye indices list
+LEFT_EYE =[ 362, 382, 381, 380, 374, 373, 390, 249, 263, 466, 388, 387, 386, 385, 384, 398 ]
+# Right eye indices list
+RIGHT_EYE=[ 33, 7, 163, 144, 145, 153, 154, 155, 133, 173, 157, 158, 159, 160, 161, 246 ]
+
+INTERNAL_LIPS=[78, 191, 80, 81, 82, 13, 312, 311, 310, 415, 308, 324, 318, 402, 317, 14, 87, 178, 88, 95, 78]
+
+EXTERNAL_LIPS=[61, 185, 40, 39, 37, 0, 267, 269, 270, 409, 291, 375, 321, 405, 314, 17, 84, 181, 91, 146, 61]
+
+def draw_eye_region(img, shape, results):
+    height, width, channels = shape
+    mesh_points=np.array([np.multiply([p.x, p.y], [width, height]).astype(int) for p in results.multi_face_landmarks[0].landmark])
+    cv2.polylines(img, [mesh_points[LEFT_EYE]], True, (0,255,0), 1, cv2.LINE_AA)
+    cv2.polylines(img, [mesh_points[RIGHT_EYE]], True, (0,255,0), 1, cv2.LINE_AA)
+    cv2.polylines(img, [mesh_points[INTERNAL_LIPS]], True, (0,255,0), 1, cv2.LINE_AA)
+
 def draw_face_contour(img, face_landmarks):
     mp.solutions.drawing_utils.draw_landmarks(
         image=img,
@@ -69,8 +85,8 @@ class FacialLandmarks478:
 
                 draw_face_tesselation(point_image, face_landmarks)
                 
-                draw_face_contour(point_image, face_landmarks)
-                
+                #draw_face_contour(point_image, face_landmarks)
+                draw_eye_region(point_image, pic.shape, results)
                 draw_iris(point_image, pic.shape, results)
 
                             
