@@ -4,24 +4,29 @@ import numpy as np
 
 circleDrawingSpec = mp.solutions.drawing_utils.DrawingSpec(thickness=1, circle_radius=1, color=(0,255,0))
 
-LEFT_IRIS = [474,475, 476, 477]
-RIGHT_IRIS = [469, 470, 471, 472]
+LEFT_IRIS = [ 474,475, 476, 477 ]
+RIGHT_IRIS = [ 469, 470, 471, 472 ]
 
-# Left eye indices list
-LEFT_EYE =[ 362, 382, 381, 380, 374, 373, 390, 249, 263, 466, 388, 387, 386, 385, 384, 398 ]
-# Right eye indices list
-RIGHT_EYE=[ 33, 7, 163, 144, 145, 153, 154, 155, 133, 173, 157, 158, 159, 160, 161, 246 ]
+LEFT_EYE = [ 362, 382, 381, 380, 374, 373, 390, 249, 263, 466, 388, 387, 386, 385, 384, 398 ]
+RIGHT_EYE = [ 33, 7, 163, 144, 145, 153, 154, 155, 133, 173, 157, 158, 159, 160, 161, 246 ]
 
-INTERNAL_LIPS=[78, 191, 80, 81, 82, 13, 312, 311, 310, 415, 308, 324, 318, 402, 317, 14, 87, 178, 88, 95, 78]
+INTERNAL_LIPS = [ 78, 191, 80, 81, 82, 13, 312, 311, 310, 415, 308, 324, 318, 402, 317, 14, 87, 178, 88, 95, 78 ]
+EXTERNAL_LIPS = [ 61, 185, 40, 39, 37, 0, 267, 269, 270, 409, 291, 375, 321, 405, 314, 17, 84, 181, 91, 146, 61 ]
 
-EXTERNAL_LIPS=[61, 185, 40, 39, 37, 0, 267, 269, 270, 409, 291, 375, 321, 405, 314, 17, 84, 181, 91, 146, 61]
+COLOR = (255, 0, 255)
 
-def draw_eye_region(img, shape, results):
+def draw_eye_region(img, shape, results, fill=True):
     height, width, channels = shape
     mesh_points=np.array([np.multiply([p.x, p.y], [width, height]).astype(int) for p in results.multi_face_landmarks[0].landmark])
-    cv2.polylines(img, [mesh_points[LEFT_EYE]], True, (0,255,0), 1, cv2.LINE_AA)
-    cv2.polylines(img, [mesh_points[RIGHT_EYE]], True, (0,255,0), 1, cv2.LINE_AA)
-    cv2.polylines(img, [mesh_points[INTERNAL_LIPS]], True, (0,255,0), 1, cv2.LINE_AA)
+    img_copy = img.copy()
+    if fill:
+        mask =cv2.fillPoly(img, [mesh_points[LEFT_EYE]], COLOR)
+        mask = cv2.fillPoly(img, [mesh_points[RIGHT_EYE]], COLOR)
+        return draw_iris(mask, img_copy, shape, results)
+    else:
+        cv2.polylines(img, [mesh_points[LEFT_EYE]], True, COLOR, 1, cv2.LINE_AA)
+        cv2.polylines(img, [mesh_points[RIGHT_EYE]], True, COLOR, 1, cv2.LINE_AA)
+    cv2.polylines(img, [mesh_points[INTERNAL_LIPS]], True, COLOR, 1, cv2.LINE_AA)
 
 def draw_face_contour(img, face_landmarks):
     mp.solutions.drawing_utils.draw_landmarks(
@@ -32,7 +37,7 @@ def draw_face_contour(img, face_landmarks):
         connection_drawing_spec=mp.solutions.drawing_styles
         .get_default_face_mesh_contours_style())
 
-def draw_iris(img, shape, results):
+def draw_iris(mask, img, shape, results):
     height, width, channels = shape
     mesh_points=np.array([np.multiply([p.x, p.y], [width, height]).astype(int) for p in results.multi_face_landmarks[0].landmark])
 
@@ -42,9 +47,11 @@ def draw_iris(img, shape, results):
     center_left = np.array([l_cx, l_cy], dtype=np.int32)
     center_right = np.array([r_cx, r_cy], dtype=np.int32)
 
-    cv2.circle(img, center_left, int(l_radius), (255,0,255), 1, cv2.LINE_AA)
-    cv2.circle(img, center_right, int(r_radius), (255,0,255), 1, cv2.LINE_AA)    
-
+    iris=cv2.circle(img, center_left, int(l_radius), COLOR, -1, cv2.LINE_AA)
+    iris=cv2.circle(iris, center_right, int(r_radius), COLOR, -1, cv2.LINE_AA)    
+    bitwiseAnd = cv2.bitwise_and(mask, iris)
+    return bitwiseAnd
+    
 def draw_face_tesselation(img, face_landmarks):
     mp.solutions.drawing_utils.draw_landmarks(
         image=img,
@@ -86,8 +93,8 @@ class FacialLandmarks478:
                 draw_face_tesselation(point_image, face_landmarks)
                 
                 #draw_face_contour(point_image, face_landmarks)
-                draw_eye_region(point_image, pic.shape, results)
-                draw_iris(point_image, pic.shape, results)
+                point_image = draw_eye_region(point_image, pic.shape, results)
+                #draw_iris(point_image, pic.shape, results)
 
                             
             return point_image
