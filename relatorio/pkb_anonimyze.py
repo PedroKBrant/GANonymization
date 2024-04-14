@@ -66,7 +66,7 @@ def concat_vertically(input_folder1, input_folder2, input_folder3, output_folder
 
 def main(experiment):
     #models_name = ['00_pkb','02_iris_tesselation', '03_iris_no_tesselation']
-    models_name = ['02_iris_tesselation']
+    models_name = ['00_pkb']
     for model in models_name:
         anon(f'relatorio/{experiment}/models/{model}.ckpt')
         #mesh('relatorio/input', 'relatorio/02_mesh')

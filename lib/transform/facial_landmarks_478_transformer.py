@@ -16,19 +16,22 @@ EXTERNAL_LIPS = [ 61, 185, 40, 39, 37, 0, 267, 269, 270, 409, 291, 375, 321, 405
 COLOR = (255, 0, 255)
 def config(mesh_congiguration, point_image, face_landmarks, pic, results):
     mesh_number = mesh_congiguration.split('_')[0]
+    print(mesh_congiguration)
+    print(mesh_number)
     if mesh_number == '00':
         draw_face_keypoints(point_image, face_landmarks)
 
     elif  mesh_number == '02':
-        draw_face_keypoints(point_image, face_landmarks)
+        draw_face_tesselation(point_image, face_landmarks)
         point_image = draw_eye_region(point_image, pic.shape, results)
 
     elif mesh_number == '03':
-        draw_face_tesselation(point_image, face_landmarks)
+        draw_face_keypoints(point_image, face_landmarks)
         point_image = draw_eye_region(point_image, pic.shape, results)
 
     else:
         draw_face_keypoints(point_image, face_landmarks)
+    return point_image
 
     #draw_face_tesselation(point_image, face_landmarks)        
     #draw_face_contour(point_image, face_landmarks)
@@ -107,7 +110,7 @@ class FacialLandmarks478:
             results = face_mesh.process(cv2.cvtColor(pic, cv2.COLOR_BGR2RGB))
             if results.multi_face_landmarks is not None and len(results.multi_face_landmarks) > 0:
                 face_landmarks = results.multi_face_landmarks[0]
-                config(mesh_congiguration, point_image, face_landmarks, pic, results)
+                point_image = config(mesh_congiguration, point_image, face_landmarks, pic, results)
            
             return point_image
 
