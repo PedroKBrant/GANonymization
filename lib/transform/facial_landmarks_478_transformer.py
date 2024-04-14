@@ -14,6 +14,26 @@ INTERNAL_LIPS = [ 78, 191, 80, 81, 82, 13, 312, 311, 310, 415, 308, 324, 318, 40
 EXTERNAL_LIPS = [ 61, 185, 40, 39, 37, 0, 267, 269, 270, 409, 291, 375, 321, 405, 314, 17, 84, 181, 91, 146, 61 ]
 
 COLOR = (255, 0, 255)
+def config(mesh_congiguration, point_image, face_landmarks, pic, results):
+    mesh_number = mesh_congiguration.split('_')[0]
+    if mesh_number == '00':
+        draw_face_keypoints(point_image, face_landmarks)
+
+    elif  mesh_number == '02':
+        draw_face_keypoints(point_image, face_landmarks)
+        point_image = draw_eye_region(point_image, pic.shape, results)
+
+    elif mesh_number == '03':
+        draw_face_tesselation(point_image, face_landmarks)
+        point_image = draw_eye_region(point_image, pic.shape, results)
+
+    else:
+        draw_face_keypoints(point_image, face_landmarks)
+
+    #draw_face_tesselation(point_image, face_landmarks)        
+    #draw_face_contour(point_image, face_landmarks)
+    #point_image = draw_eye_region(point_image, pic.shape, results)
+    #draw_iris(point_image, pic.shape, results)
 
 def draw_eye_region(img, shape, results, fill=True):
     height, width, channels = shape
@@ -72,7 +92,7 @@ class FacialLandmarks478:
     Extract 478 facial landmark points from the picture and return it in a 2-dimensional picture.
     """
 
-    def __call__(self, pic: np.ndarray) -> np.ndarray:
+    def __call__(self, pic: np.ndarray, mesh_congiguration: str = '00_pkb') -> np.ndarray:
         """
         @param pic (numpy.ndarray): Image to be converted to a facial landmark image
         with 478 points.
@@ -87,16 +107,8 @@ class FacialLandmarks478:
             results = face_mesh.process(cv2.cvtColor(pic, cv2.COLOR_BGR2RGB))
             if results.multi_face_landmarks is not None and len(results.multi_face_landmarks) > 0:
                 face_landmarks = results.multi_face_landmarks[0]
-
-                #draw_face_keypoints(point_image, face_landmarks)
-
-                draw_face_tesselation(point_image, face_landmarks)
-                
-                #draw_face_contour(point_image, face_landmarks)
-                point_image = draw_eye_region(point_image, pic.shape, results)
-                #draw_iris(point_image, pic.shape, results)
-
-                            
+                config(mesh_congiguration, point_image, face_landmarks, pic, results)
+           
             return point_image
 
     def __repr__(self) -> str:

@@ -170,8 +170,8 @@ def train_classifier(data_dir: str, num_classes: int, learning_rate: float = 0.0
     eval_classifier(models_dir, data_dir, batch_size, device, output_dir, num_workers)
 
 
-def anonymize_image(model_file: str, input_file: str, output_file: str, img_size: int = 512,
-                    align: bool = True, device: int = 0):
+def anonymize_image(model_file: str, input_file: str, output_file: str, mesh_configuration: str='00_pkb',
+                    img_size: int = 512, align: bool = True, device: int = 0):
     """
     Anonymize one face in a single image.
     @param model_file: The GANonymization model to be used for anonymization.
@@ -182,23 +182,25 @@ def anonymize_image(model_file: str, input_file: str, output_file: str, img_size
     @param device: The device to run the process on.
     """
     img = cv2.imread(input_file)
-    print(input_file)
+    print(output_file)
     if img is not None:
         img = FaceCrop(align)(img)
         if len(img) > 0:
+            print(len(img))
             img = img[0]
             img = ZeroPaddingResize(img_size)(img)
-            img = FacialLandmarks478()(img)
+            img = FacialLandmarks478()(img, mesh_configuration)
             img = Pix2PixTransformer(model_file, img_size, device)(img)
             os.makedirs(os.path.dirname(output_file), exist_ok=True)
             img = normalize_image(img)
             cv2.imwrite(output_file, img)
         else:
             print("no face")
+    else:
+        print("None image")
 
-
-def anonymize_directory(model_file: str, input_directory: str, output_directory: str,
-                        img_size: int = 512, align: bool = True, device: int = 0):
+def anonymize_directory(model_file: str, input_directory: str, output_directory: str, mesh_configuration: str='00_pkb',
+                        img_size: int = 512, align: bool = True, device: int = 0, ):
     """
     Anonymize a set of images in a directory.
     @param model_file: The GANonymization model to be used for anonymization.
@@ -211,7 +213,7 @@ def anonymize_directory(model_file: str, input_directory: str, output_directory:
     for file in tqdm(os.listdir(input_directory), desc=f"Anonymizing from {input_directory}"):
         input_file = os.path.join(input_directory, file)
         output_file = os.path.join(output_directory, os.path.basename(file))
-        anonymize_image(model_file, input_file, output_file, img_size, align, device)
+        anonymize_image(model_file, input_file, output_file, mesh_configuration, img_size, align, device)
 
 def custom_preprocess(input_path: str, img_size: int = 512, align: bool = True, test_size: float = 0.1,
                shuffle: bool = True, output_dir: str = None, num_workers: int = 8):
