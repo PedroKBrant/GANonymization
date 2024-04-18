@@ -23,6 +23,7 @@ def move_files_from_list(images_dir, output_dir, file_list):
         if image_filename.endswith('.jpg'):
             filename_parts = image_filename.split('-')
             last_part = filename_parts[-1].strip()
+            print(last_part)
             if last_part in file_list:
                 source_path = os.path.join(images_dir, image_filename)
                 destination_path = os.path.join(output_dir, image_filename)
