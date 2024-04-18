@@ -26,7 +26,7 @@ def resize_to_match(image, target_image):
     return cv2.resize(image, (target_image.shape[1], target_image.shape[0]))
 
 def exec_augmentation(files: List[str], output_dir: str, input_dir: str, size: int, gallery: bool,
-                      transformer):
+                      transformer, mesh_configuration: str):
     """
     Executes the augmentation.
     @param files: The files to be augmented.
@@ -43,7 +43,12 @@ def exec_augmentation(files: List[str], output_dir: str, input_dir: str, size: i
         sub_output_dir = os.path.join(output_dir, *sub_path_image.split(os.sep))
         img = cv2.imread(image_file)
         if img is not None:
-            pred = transformer(img)
+            if name == 'FacialLandmarks478':
+                print('ENTREI AQUI FacialLandmarks478')
+                print(mesh_configuration)
+                pred = transformer(img, mesh_configuration)
+            else:
+                pred = transformer(img) 
             if not isinstance(pred, List):
                 pred = [pred]
             for idx, sub_pred in enumerate(pred):
@@ -60,7 +65,7 @@ def exec_augmentation(files: List[str], output_dir: str, input_dir: str, size: i
     return 0
 
 
-def transform(input_dir: str, size: int, gallery: bool, transformer,
+def transform(input_dir: str, size: int, gallery: bool, transformer, mesh_configuration: str='00_pkb',
               output_dir: Optional[str] = None, num_workers: int = 1) -> str:
     """
     Transform all images found in the input directory.
@@ -105,7 +110,7 @@ def transform(input_dir: str, size: int, gallery: bool, transformer,
                       [input_dir] * len(list_chunks),
                       [size] * len(list_chunks), [gallery] * len(list_chunks),
                       [transformer] * len(list_chunks),
-                      num_cpus=num_workers)
+                      num_cpus=num_workers, mesh_configuration = mesh_configuration)
     else:
         logger.debug('Data has already been fully processed!')
     return output_dir

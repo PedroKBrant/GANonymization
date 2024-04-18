@@ -170,7 +170,7 @@ def train_classifier(data_dir: str, num_classes: int, learning_rate: float = 0.0
     eval_classifier(models_dir, data_dir, batch_size, device, output_dir, num_workers)
 
 
-def anonymize_image(model_file: str, input_file: str, output_file: str, mesh_configuration: str='00_pkb',
+def anonymize_image(model_file: str, input_file: str, output_file: str, mesh_configuration: str='04_iris_elipse',
                     img_size: int = 512, align: bool = True, device: int = 0):
     """
     Anonymize one face in a single image.
@@ -182,11 +182,9 @@ def anonymize_image(model_file: str, input_file: str, output_file: str, mesh_con
     @param device: The device to run the process on.
     """
     img = cv2.imread(input_file)
-    print(output_file)
     if img is not None:
         img = FaceCrop(align)(img)
         if len(img) > 0:
-            print(len(img))
             img = img[0]
             img = ZeroPaddingResize(img_size)(img)
             img = FacialLandmarks478()(img, mesh_configuration)
@@ -198,7 +196,7 @@ def anonymize_image(model_file: str, input_file: str, output_file: str, mesh_con
             print("no face")
     else:
         print("None image")
-
+    
 def anonymize_directory(model_file: str, input_directory: str, output_directory: str, mesh_configuration: str='00_pkb',
                         img_size: int = 512, align: bool = True, device: int = 0, ):
     """
@@ -215,10 +213,10 @@ def anonymize_directory(model_file: str, input_directory: str, output_directory:
         output_file = os.path.join(output_directory, os.path.basename(file))
         anonymize_image(model_file, input_file, output_file, mesh_configuration, img_size, align, device)
 
-def custom_preprocess(input_path: str, img_size: int = 512, align: bool = True, test_size: float = 0.1,
+def custom_preprocess(input_path: str, mesh_configuration: str='00_pkb', img_size: int = 512, align: bool = True, test_size: float = 0.1,
                shuffle: bool = True, output_dir: str = None, num_workers: int = 8):
     output_dir = input_path+'/FaceSegmentation'
-    output_dir = transform(output_dir, img_size, True, FacialLandmarks478(),
+    output_dir = transform(output_dir, img_size, True, FacialLandmarks478(), mesh_configuration,
                         num_workers=num_workers)
 
 if __name__ == '__main__':

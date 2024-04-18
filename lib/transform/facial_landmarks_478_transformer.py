@@ -14,20 +14,65 @@ INTERNAL_LIPS = [ 78, 191, 80, 81, 82, 13, 312, 311, 310, 415, 308, 324, 318, 40
 EXTERNAL_LIPS = [ 61, 185, 40, 39, 37, 0, 267, 269, 270, 409, 291, 375, 321, 405, 314, 17, 84, 181, 91, 146, 61 ]
 
 COLOR = (255, 0, 255)
+
+SCALE_W = 0.35 #178/512
+SCALE_H =0.43 #218/512
+class Ellipse:
+    def __init__(self, points):
+        self.points = points
+        self.axis = self.calculate_axis()
+        self.centroid = self.calculate_centroid()
+
+    def __str__(self):
+        attributes = ", ".join(f"{key}={value}" for key, value in self.__dict__.items())
+        return f"Ellipse({attributes})"
+    
+    def calculate_axis(self):
+        axis1 = self.points[3][1] - self.points[1][1]
+        axis2 = self.points[0][0] - self.points[2][0]
+        return (axis2*SCALE_H, axis1*SCALE_H)
+    
+    def calculate_centroid(self):
+        mean_x = sum(point[0] for point in self.points) / len(self.points)
+        mean_y = sum(point[1] for point in self.points) / len(self.points)
+        return (mean_x, mean_y)
+
+class Eyes:
+    def __init__(self, points1, points2):
+        self.ellipse_left = Ellipse(points1)
+        self.ellipse_right = Ellipse(points2)
+
+    def __str__(self):
+        attributes = ", ".join(f"{key}={value}" for key, value in self.__dict__.items())
+        return f"Ellipse({attributes})"
+
+    def draw_on_image(self, image, color=(0, 255, 0), thickness=2):
+        center_left = tuple(map(int, self.ellipse_left.centroid))
+        axes_length_left = tuple(map(int, self.ellipse_left.axis))
+        center_right = tuple(map(int, self.ellipse_right.centroid))
+        axes_length_right = tuple(map(int, self.ellipse_right.axis))
+        
+        cv2.ellipse(image, center_left, axes_length_left, 0, 0, 360, color, thickness)
+        cv2.ellipse(image, center_right, axes_length_right, 0, 0, 360, color, thickness)
+
 def config(mesh_congiguration, point_image, face_landmarks, pic, results):
     mesh_number = mesh_congiguration.split('_')[0]
-    print(mesh_congiguration)
-    print(mesh_number)
+    print("MESH NUMBER: ", mesh_number)
     if mesh_number == '00':
         draw_face_keypoints(point_image, face_landmarks)
+        #draw_iris_mesh(point_image, face_landmarks)
 
     elif  mesh_number == '02':
         draw_face_tesselation(point_image, face_landmarks)
-        point_image = draw_eye_region(point_image, pic.shape, results)
+        point_image = draw_eye_region(point_image, pic.shape, results, mesh_number)
 
     elif mesh_number == '03':
         draw_face_keypoints(point_image, face_landmarks)
-        point_image = draw_eye_region(point_image, pic.shape, results)
+        point_image = draw_eye_region(point_image, pic.shape, results, mesh_number)
+    
+    elif mesh_number == '04':
+        draw_face_tesselation(point_image, face_landmarks)
+        point_image = draw_eye_region(point_image, pic.shape, results, mesh_number)
 
     else:
         draw_face_keypoints(point_image, face_landmarks)
@@ -38,16 +83,20 @@ def config(mesh_congiguration, point_image, face_landmarks, pic, results):
     #point_image = draw_eye_region(point_image, pic.shape, results)
     #draw_iris(point_image, pic.shape, results)
 
-def draw_eye_region(img, shape, results, fill=True):
+def draw_eye_region(img, shape, results, mesh_number, fill=True):
     height, width, channels = shape
     mesh_points=np.array([np.multiply([p.x, p.y], [width, height]).astype(int) for p in results.multi_face_landmarks[0].landmark])
     img_copy = img.copy()
     if fill:
         mask =cv2.fillPoly(img, [mesh_points[LEFT_EYE]], COLOR)
         mask = cv2.fillPoly(img, [mesh_points[RIGHT_EYE]], COLOR)
-        return draw_iris(mask, img_copy, shape, results)
+        if mesh_number == '04':
+            return draw_iris(mask, img_copy, shape, results)
+        else:
+            return draw_iris_circle(mask, img_copy, shape, results)
+
     else:
-        cv2.polylines(img, [mesh_points[LEFT_EYE]], True, COLOR, 1, cv2.LINE_AA)
+        cv2.polylines(img, [mesh_points[LEFT_EYE ]], True, COLOR, 1, cv2.LINE_AA)
         cv2.polylines(img, [mesh_points[RIGHT_EYE]], True, COLOR, 1, cv2.LINE_AA)
     cv2.polylines(img, [mesh_points[INTERNAL_LIPS]], True, COLOR, 1, cv2.LINE_AA)
 
@@ -60,7 +109,7 @@ def draw_face_contour(img, face_landmarks):
         connection_drawing_spec=mp.solutions.drawing_styles
         .get_default_face_mesh_contours_style())
 
-def draw_iris(mask, img, shape, results):
+def draw_iris_circle(mask, img, shape, results):
     height, width, channels = shape
     mesh_points=np.array([np.multiply([p.x, p.y], [width, height]).astype(int) for p in results.multi_face_landmarks[0].landmark])
 
@@ -74,7 +123,51 @@ def draw_iris(mask, img, shape, results):
     iris=cv2.circle(iris, center_right, int(r_radius), COLOR, -1, cv2.LINE_AA)    
     bitwiseAnd = cv2.bitwise_and(mask, iris)
     return bitwiseAnd
-    
+
+def draw_iris(mask, img, shape, results):
+    height, width, channels = shape
+
+    mesh_points=np.array([np.multiply([p.x, p.y], [width, height]).astype(int) for p in results.multi_face_landmarks[0].landmark])
+    eyes = Eyes(mesh_points[LEFT_IRIS], mesh_points[RIGHT_IRIS])
+
+    center_left = tuple(map(int, eyes.ellipse_left.centroid))
+    center_left[0] = center_left[0] - 30 # TODO desenhando iris errada
+    axes_length_left = tuple(map(int, eyes.ellipse_left.axis))
+    center_right = tuple(map(int, eyes.ellipse_right.centroid))
+    axes_length_right = tuple(map(int, eyes.ellipse_right.axis))
+
+    if axes_length_left[0] > 0 and axes_length_left[1] > 0 and axes_length_right[0] > 0 and axes_length_right[1] > 0:
+        iris=cv2.ellipse(img,  center_left, axes_length_left, 0, 0, 360, COLOR, -1)
+        iris=cv2.ellipse(iris, center_right, axes_length_right, 0, 0, 360, COLOR, -1)
+    else:
+        return mask
+    bitwiseAnd = cv2.bitwise_and(mask, iris)
+    return bitwiseAnd
+
+def draw_iris_DEPRECATED(mask, img, shape, results):
+    height, width, channels = shape
+    mesh_points=np.array([np.multiply([p.x, p.y], [width, height]).astype(int) for p in results.multi_face_landmarks[0].landmark])
+
+    (l_cx, l_cy), l_radius = cv2.minEnclosingCircle(mesh_points[LEFT_IRIS])
+    (r_cx, r_cy), r_radius = cv2.minEnclosingCircle(mesh_points[RIGHT_IRIS])
+    # turn center points into np array 
+    center_left  = np.array([l_cx, l_cy], dtype=np.int32)
+    center_right = np.array([r_cx, r_cy], dtype=np.int32)
+
+    LEFT_ELIPSE  = np.append(mesh_points[LEFT_IRIS], center_left.reshape(1, -1), axis=0)
+    RIGHT_ELIPSE = np.append(mesh_points[RIGHT_EYE], center_right.reshape(1, -1), axis=0)
+
+    left_ellipse  = cv2.fitEllipse(LEFT_ELIPSE)
+    right_ellipse = cv2.fitEllipse(RIGHT_ELIPSE)
+    # turn center points into np array 
+    #center_left = np.array([l_cx, l_cy], dtype=np.int32)
+    #center_right = np.array([r_cx, r_cy], dtype=np.int32)
+
+    iris=cv2.ellipse(img, left_ellipse, COLOR, -1)
+    iris=cv2.ellipse(iris, right_ellipse, COLOR, -1)
+    bitwiseAnd = cv2.bitwise_and(mask, iris)
+    return bitwiseAnd
+
 def draw_face_tesselation(img, face_landmarks):
     mp.solutions.drawing_utils.draw_landmarks(
         image=img,
@@ -90,12 +183,21 @@ def draw_face_keypoints(img, face_landmarks):
         landmark_list=face_landmarks,
         landmark_drawing_spec=mp.solutions.drawing_utils.DrawingSpec(color=(255, 255, 255), thickness=1,
                                                                     circle_radius=0))
+def draw_iris_mesh(img, face_landmarks):
+    mp.solutions.drawing_utils.draw_landmarks(
+          image=img,
+          landmark_list=face_landmarks,
+          connections=mp.solutions.face_mesh.FACEMESH_IRISES,
+          landmark_drawing_spec=None,
+          connection_drawing_spec=mp.solutions.drawing_styles
+          .get_default_face_mesh_iris_connections_style())
+    
 class FacialLandmarks478:
     """
     Extract 478 facial landmark points from the picture and return it in a 2-dimensional picture.
     """
 
-    def __call__(self, pic: np.ndarray, mesh_congiguration: str = '00_pkb') -> np.ndarray:
+    def __call__(self, pic: np.ndarray, mesh_congiguration: str = '02_iris_tesselation') -> np.ndarray:
         """
         @param pic (numpy.ndarray): Image to be converted to a facial landmark image
         with 478 points.
