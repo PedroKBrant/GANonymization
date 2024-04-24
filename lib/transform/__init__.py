@@ -26,7 +26,7 @@ def resize_to_match(image, target_image):
     return cv2.resize(image, (target_image.shape[1], target_image.shape[0]))
 
 def exec_augmentation(files: List[str], output_dir: str, input_dir: str, size: int, gallery: bool,
-                      transformer, mesh_configuration: str):
+                      transformer):
     """
     Executes the augmentation.
     @param files: The files to be augmented.
@@ -45,6 +45,7 @@ def exec_augmentation(files: List[str], output_dir: str, input_dir: str, size: i
         if img is not None:
             if name == 'FacialLandmarks478':
                 print('ENTREI AQUI FacialLandmarks478')
+                mesh_configuration = '05_pkb'#TODO FIX THIS
                 print(mesh_configuration)
                 pred = transformer(img, mesh_configuration)
             else:
@@ -110,7 +111,7 @@ def transform(input_dir: str, size: int, gallery: bool, transformer, mesh_config
                       [input_dir] * len(list_chunks),
                       [size] * len(list_chunks), [gallery] * len(list_chunks),
                       [transformer] * len(list_chunks),
-                      num_cpus=num_workers, mesh_configuration = mesh_configuration)
+                      num_cpus=num_workers)
     else:
         logger.debug('Data has already been fully processed!')
     return output_dir

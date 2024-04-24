@@ -14,6 +14,11 @@ INTERNAL_LIPS = [ 78, 191, 80, 81, 82, 13, 312, 311, 310, 415, 308, 324, 318, 40
 EXTERNAL_LIPS = [ 61, 185, 40, 39, 37, 0, 267, 269, 270, 409, 291, 375, 321, 405, 314, 17, 84, 181, 91, 146, 61 ]
 
 COLOR = (255, 0, 255)
+COLOR_IRIS = (255, 0, 0)
+
+BLUE = (255, 0, 0)
+GREEN = (0, 255, 0)
+RED = (0, 0, 255)
 
 SCALE_W = 0.35 #178/512
 SCALE_H =0.43 #218/512
@@ -74,6 +79,10 @@ def config(mesh_congiguration, point_image, face_landmarks, pic, results):
         draw_face_tesselation(point_image, face_landmarks)
         point_image = draw_eye_region(point_image, pic.shape, results, mesh_number)
 
+    elif mesh_number == '05':#TODO fix this
+        draw_face_tesselation(point_image, face_landmarks)
+        point_image = draw_eye_region_colorful(point_image, pic.shape, results, mesh_number)
+
     else:
         draw_face_keypoints(point_image, face_landmarks)
     return point_image
@@ -82,6 +91,22 @@ def config(mesh_congiguration, point_image, face_landmarks, pic, results):
     #draw_face_contour(point_image, face_landmarks)
     #point_image = draw_eye_region(point_image, pic.shape, results)
     #draw_iris(point_image, pic.shape, results)
+
+def draw_countour_iris(img, shape, results):
+    height, width, channels = shape
+    mesh_points=np.array([np.multiply([p.x, p.y], [width, height]).astype(int) for p in results.multi_face_landmarks[0].landmark])
+    eyes = Eyes(mesh_points[LEFT_IRIS], mesh_points[RIGHT_IRIS])
+
+    center_left = tuple(map(int, eyes.ellipse_left.centroid))
+    axes_length_left = tuple(map(int, eyes.ellipse_left.axis))
+    center_right = tuple(map(int, eyes.ellipse_right.centroid))
+    axes_length_right = tuple(map(int, eyes.ellipse_right.axis))
+
+    countour = cv2.polylines(img, [mesh_points[LEFT_EYE ]], True, RED, 2, cv2.LINE_AA)
+    countour = cv2.polylines(countour, [mesh_points[RIGHT_EYE]], True, RED, 2, cv2.LINE_AA)
+    countour = cv2.ellipse(countour,  center_left, axes_length_left, 0, 0, 360, RED, 2)#TODO ADD FLAG
+    countour = cv2.ellipse(countour, center_right, axes_length_right, 0, 0, 360, RED, 2)
+    return countour
 
 def draw_eye_region(img, shape, results, mesh_number, fill=True):
     height, width, channels = shape
@@ -99,6 +124,21 @@ def draw_eye_region(img, shape, results, mesh_number, fill=True):
         cv2.polylines(img, [mesh_points[LEFT_EYE ]], True, COLOR, 1, cv2.LINE_AA)
         cv2.polylines(img, [mesh_points[RIGHT_EYE]], True, COLOR, 1, cv2.LINE_AA)
     cv2.polylines(img, [mesh_points[INTERNAL_LIPS]], True, COLOR, 1, cv2.LINE_AA)
+
+def draw_eye_region_colorful(img, shape, results, mesh_number, fill=True):
+    height, width, channels = shape
+    mesh_points=np.array([np.multiply([p.x, p.y], [width, height]).astype(int) for p in results.multi_face_landmarks[0].landmark])
+    img_copy = img.copy()
+    if fill:
+        mask = cv2.polylines(img, [mesh_points[INTERNAL_LIPS]], True, RED, 2, cv2.LINE_AA)
+        img_copy = mask.copy()
+        mask = cv2.fillPoly(img, [mesh_points[LEFT_EYE]], GREEN)
+        mask = cv2.fillPoly(img, [mesh_points[RIGHT_EYE]], GREEN)
+        return draw_iris_colorful(mask, img_copy, shape, results)
+    else:#TODO check if still necessary
+        cv2.polylines(img, [mesh_points[LEFT_EYE ]], True, (0,0,255), 3, cv2.LINE_AA)
+        cv2.polylines(img, [mesh_points[RIGHT_EYE]], True, (0,0,255), 3, cv2.LINE_AA)
+    cv2.polylines(img, [mesh_points[INTERNAL_LIPS]], True, (0,0,255), 3, cv2.LINE_AA)
 
 def draw_face_contour(img, face_landmarks):
     mp.solutions.drawing_utils.draw_landmarks(
@@ -131,7 +171,7 @@ def draw_iris(mask, img, shape, results):
     eyes = Eyes(mesh_points[LEFT_IRIS], mesh_points[RIGHT_IRIS])
 
     center_left = tuple(map(int, eyes.ellipse_left.centroid))
-    center_left[0] = center_left[0] - 30 # TODO desenhando iris errada
+    #center_left[0] = center_left[0] - 30 # TODO desenhando iris errada
     axes_length_left = tuple(map(int, eyes.ellipse_left.axis))
     center_right = tuple(map(int, eyes.ellipse_right.centroid))
     axes_length_right = tuple(map(int, eyes.ellipse_right.axis))
@@ -139,9 +179,52 @@ def draw_iris(mask, img, shape, results):
     if axes_length_left[0] > 0 and axes_length_left[1] > 0 and axes_length_right[0] > 0 and axes_length_right[1] > 0:
         iris=cv2.ellipse(img,  center_left, axes_length_left, 0, 0, 360, COLOR, -1)
         iris=cv2.ellipse(iris, center_right, axes_length_right, 0, 0, 360, COLOR, -1)
+        bitwiseAnd = cv2.bitwise_and(mask, iris)
+        return bitwiseAnd
+    else:
+        return mask
+
+
+def draw_iris_colorful(mask, img, shape, results):
+    height, width, channels = shape
+
+    mesh_points=np.array([np.multiply([p.x, p.y], [width, height]).astype(int) for p in results.multi_face_landmarks[0].landmark])
+    eyes = Eyes(mesh_points[LEFT_IRIS], mesh_points[RIGHT_IRIS])
+
+    center_left = tuple(map(int, eyes.ellipse_left.centroid))
+    #center_left[0] = center_left[0] - 30 # TODO desenhando iris errada
+    axes_length_left = tuple(map(int, eyes.ellipse_left.axis))
+    center_right = tuple(map(int, eyes.ellipse_right.centroid))
+    axes_length_right = tuple(map(int, eyes.ellipse_right.axis))
+
+    if axes_length_left[0] > 0 and axes_length_left[1] > 0 and axes_length_right[0] > 0 and axes_length_right[1] > 0:
+        iris=cv2.ellipse(img,  center_left, axes_length_left, 0, 0, 360, GREEN, -1)
+        iris=cv2.ellipse(iris, center_right, axes_length_right, 0, 0, 360, GREEN, -1)
     else:
         return mask
     bitwiseAnd = cv2.bitwise_and(mask, iris)
+    if True:
+        lower_green = np.array([0,200,0])
+        upper_green = np.array([0,255,0])
+        green_mask = cv2.inRange(bitwiseAnd, lower_green, upper_green)
+        img_green_mask = cv2.bitwise_and(bitwiseAnd, bitwiseAnd, mask=green_mask)
+        mask_2 = cv2.fillPoly(img, [mesh_points[LEFT_EYE]], BLUE)
+        mask_2 = cv2.fillPoly(img, [mesh_points[RIGHT_EYE]], BLUE)
+        #bitwiseAnd = cv2.bitwise_and(mask_2, iris)
+        bitwiseOR = cv2.bitwise_or(mask_2, img_green_mask)
+        countour = draw_countour_iris(img, shape, results)
+        countour_OR = cv2.bitwise_or(bitwiseOR, countour)
+
+        lower = np.array([200,0,0])
+        upper = np.array([255,255,255])
+        someblue_mask = cv2.inRange(countour_OR, lower, upper)
+        final_image = cv2.bitwise_and(countour_OR, countour_OR, mask=someblue_mask)
+
+        lower_grey = np.array([50,50,50])
+        grey_mask = cv2.inRange(img, lower_grey, upper)
+        mesh  = cv2.bitwise_and(img, img, mask=grey_mask)
+        final_image = cv2.bitwise_or(mesh, final_image)
+        return final_image
     return bitwiseAnd
 
 def draw_iris_DEPRECATED(mask, img, shape, results):

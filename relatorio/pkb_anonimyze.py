@@ -12,7 +12,7 @@ def anon(experiment, model_path):
     output = f'relatorio/{experiment}/results/'+ mesh_congiguration
     anonymize_directory(model, f'relatorio/{experiment}/original', output, mesh_congiguration)
 
-def mesh(experiment, input, model):
+def mesh(experiment, input, model):#TODO create folder
     for file in tqdm(os.listdir(input), desc=f"Generating mesh from {input}"):
         output = f'relatorio/{experiment}/mesh/{model}'
         file_path = os.path.join(input, file)
@@ -69,15 +69,15 @@ def concat_vertically(input_folder1, input_folder2, input_folder3, input_folder4
             print(f"Concatenated and saved {filename1} to {output_folder}")
 
 def main(experiment):
-    models_name = ['00_pkb','02_iris_tesselation', '03_iris_no_tesselation', '04_iris_elipse']#'00_pkb',
-    #models_name = ['04_iris_elipse']
+    models_name = ['00_pkb','02_iris_tesselation', '03_iris_no_tesselation', '04_iris_elipse', '05_iris_elipse_countour']#'00_pkb',
+    #models_name = ['05_iris_elipse_countour']
 
     for model in models_name:
-        output_folder = f'relatorio/{experiment}/concat/{model}'
-        concat(f'relatorio/{experiment}/input', f'relatorio/{experiment}/mesh', f'relatorio/{experiment}/results', model, output_folder, experiment)
-    #    anon(experiment, f'relatorio/{experiment}/models/{model}.ckpt')
-    #    mesh(experiment, f'relatorio/{experiment}/input', model)
-#main('03_experiment')
+        anon(experiment, f'relatorio/{experiment}/models/{model}.ckpt')
+        mesh(experiment, f'relatorio/{experiment}/input', model)
+        #output_folder = f'relatorio/{experiment}/concat/{model}'
+        #concat(f'relatorio/{experiment}/input', f'relatorio/{experiment}/mesh', f'relatorio/{experiment}/results', model, output_folder, experiment)
+main('04_experiment')
 #parameter = model_name[0]
 '''
 experiment = '03_experiment'
@@ -91,9 +91,9 @@ output_folder = f'relatorio/{experiment}/concat/final'
 concat_vertically(input_folder1, input_folder2, input_folder3, input_folder4, output_folder)
 '''
 
-anonymize_image('/home/voxar/Desktop/pkb/GANonymization/relatorio/03_experiment/models/04_iris_elipse.ckpt', 
-                '/home/voxar/Desktop/pkb/GANonymization/relatorio/03_experiment/original/162831.jpg', 
-                '/home/voxar/Desktop/pkb/GANonymization/relatorio/03_experiment/teste_agora.jpg')
+#anonymize_image('/home/voxar/Desktop/pkb/GANonymization/relatorio/03_experiment/models/04_iris_elipse.ckpt', 
+#                '/home/voxar/Desktop/pkb/GANonymization/relatorio/03_experiment/original/162831.jpg', 
+#                '/home/voxar/Desktop/pkb/GANonymization/relatorio/03_experiment/teste_agora.jpg')
 
 #TO DO automatize all methods based on the moedl_name array
 #TO DO make FacialLandmarks mesh options as an hiperparameter
