@@ -62,7 +62,7 @@ class Eyes:
 
 def config(mesh_congiguration, point_image, face_landmarks, pic, results):
     mesh_number = mesh_congiguration.split('_')[0]
-    print("MESH NUMBER: ", mesh_number)
+    #print("MESH NUMBER: ", mesh_number)
     if mesh_number == '00':
         draw_face_keypoints(point_image, face_landmarks)
         #draw_iris_mesh(point_image, face_landmarks)

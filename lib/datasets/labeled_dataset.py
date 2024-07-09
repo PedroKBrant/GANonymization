@@ -62,7 +62,7 @@ class LabeledDataset(Dataset):
     def __getitem__(self, idx) -> Tuple[Tensor, np.ndarray]:
         df = self.meta_data.iloc[idx]
         img = Image.open(df["image_path"])
-        img = self.transforms(img)
+        img = self.transforms(img).convert('RGB')
         labels = df[self.labels].astype(float).to_numpy()
         return img, labels
 

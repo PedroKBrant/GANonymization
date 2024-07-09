@@ -31,7 +31,7 @@ class ImageDataset(Dataset):
 
     def __getitem__(self, index):
         file_path = self.files[index % len(self.files)]
-        img = Image.open(file_path)
+        img = Image.open(file_path).convert('RGB')
         w, h = img.size
         img_a = img.crop((0, 0, int(w / 2), h))
         img_a = self.transform(img_a)

@@ -74,10 +74,10 @@ def main(experiment):
 
     for model in models_name:
         anon(experiment, f'relatorio/{experiment}/models/{model}.ckpt')
-        mesh(experiment, f'relatorio/{experiment}/input', model)
+        #mesh(experiment, f'relatorio/{experiment}/input', model)
         #output_folder = f'relatorio/{experiment}/concat/{model}'
         #concat(f'relatorio/{experiment}/input', f'relatorio/{experiment}/mesh', f'relatorio/{experiment}/results', model, output_folder, experiment)
-main('04_experiment')
+main('06_experiment')
 #parameter = model_name[0]
 '''
 experiment = '03_experiment'

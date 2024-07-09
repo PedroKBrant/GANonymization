@@ -54,8 +54,9 @@ def preprocess(input_path: str, img_size: int = 512, align: bool = True, test_si
     logger.info(f"Parameters: {', '.join([f'{key}: {value}' for key, value in locals().items()])}")
     if output_dir is None:
         output_dir = input_path
-    output_dir = os.path.join(output_dir, 'original')
-
+    #output_dir = os.path.join(output_dir, 'original')
+    
+    '''
     # Split dataset
     split_file = extract_labels(input_path)
     if split_file:
@@ -71,7 +72,7 @@ def preprocess(input_path: str, img_size: int = 512, align: bool = True, test_si
         train_files, test_files = train_test_split(files, test_size=test_size, shuffle=shuffle)
         move_files(train_files, os.path.join(output_dir, 'train'))
         move_files(test_files, os.path.join(output_dir, 'val'))
-
+    '''
     # Apply Transformers
     output_dir = transform(output_dir, img_size, False, FaceCrop(align),
                            num_workers=num_workers)
@@ -91,7 +92,7 @@ python main.py train_pix2pix --data_dir lib/datasets/CelebA/celeba/img/ --log_di
 def train_pix2pix(data_dir: str, log_dir: str, models_dir: str, output_dir: str, dataset_name: str,
                   epoch: int = 0, n_epochs: int = 100, batch_size: int = 32, lr: float = 0.0002,
                   b1: float = 0.5, b2: float = 0.999, n_cpu: int = 8, img_size: int = 512,
-                  checkpoint_interval: int = 5493, device: int = 0):
+                  checkpoint_interval: int = 1835, device: int = 0):
     """
     Train the pix2pix GAN for generating faces based on given landmarks.
     @param data_dir: The root path to the data folder.
@@ -137,7 +138,7 @@ def train_classifier(data_dir: str, num_classes: int, learning_rate: float = 0.0
     Run the training.
     @param data_dir:
     @param num_classes:
-    @param learning_rate: The learning rate.
+    @param learning_rate: The learning rate.a
     @param batch_size: The batch size.
     @param n_epochs: The number of epochs to train.
     @param device: The device to work on.
@@ -218,6 +219,16 @@ def custom_preprocess(input_path: str, mesh_configuration: str='00_pkb', img_siz
     output_dir = input_path+'/FaceSegmentation'
     output_dir = transform(output_dir, img_size, True, FacialLandmarks478(), mesh_configuration,
                         num_workers=num_workers)
+
+
+def anonymize_all(folder_path: str):
+    # List all folders in the source folder
+    folders = [name for name in os.listdir(folder_path) if os.path.isdir(os.path.join(folder_path, name))]
+    folders.sort()
+
+    for folder in folders:
+        print(folder_path+'/'+folder)
+        anonymize_directory("baseline/00_pkb_21_02.ckpt", folder_path+'/'+folder,  "../MetaGazeGANonymization/"+folder)
 
 if __name__ == '__main__':
     fire.Fire()
