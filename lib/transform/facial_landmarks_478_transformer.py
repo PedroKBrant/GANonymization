@@ -280,7 +280,7 @@ class FacialLandmarks478:
     Extract 478 facial landmark points from the picture and return it in a 2-dimensional picture.
     """
 
-    def __call__(self, pic: np.ndarray, mesh_congiguration: str = '02_iris_tesselation') -> np.ndarray:
+    def __call__(self, pic: np.ndarray, mesh_congiguration: str = '03_pkb') -> np.ndarray:
         """
         @param pic (numpy.ndarray): Image to be converted to a facial landmark image
         with 478 points.

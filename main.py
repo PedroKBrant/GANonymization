@@ -30,6 +30,9 @@ from lib.transform.facial_landmarks_478_transformer import FacialLandmarks478
 from lib.transform.pix2pix_transformer import Pix2PixTransformer
 from lib.utils import glob_dir, get_last_ckpt, move_files
 
+from torchsummary import summary
+import torch
+
 SEED = 42
 
 def normalize_image(img):
@@ -40,7 +43,7 @@ def normalize_image(img):
     return img
 
 def preprocess(input_path: str, img_size: int = 512, align: bool = True, test_size: float = 0.1,
-               shuffle: bool = True, output_dir: str = None, num_workers: int = 8):
+               shuffle: bool = True, output_dir: str = None, num_workers: int = 1):
     """
     Run all pre-processing steps (split, crop, segmentation, landmark) at once.
     @param input_path: The path to a directory to be processed.
@@ -55,9 +58,8 @@ def preprocess(input_path: str, img_size: int = 512, align: bool = True, test_si
     if output_dir is None:
         output_dir = input_path
     #output_dir = os.path.join(output_dir, 'original')
-    
-    '''
     # Split dataset
+    '''
     split_file = extract_labels(input_path)
     if split_file:
         df = pd.read_csv(split_file)
@@ -78,21 +80,14 @@ def preprocess(input_path: str, img_size: int = 512, align: bool = True, test_si
                            num_workers=num_workers)
     output_dir = transform(output_dir, img_size, False, FaceSegmentation(),
                            num_workers=num_workers)
-    #output_dir ='lib/datasets/CelebA/celeba/img/FaceSegmentation/'
-    #output_dir = 'lib/datasets/CelebA/celeba/img/FaceSegmentation'
     output_dir = transform(output_dir, img_size, True, FacialLandmarks478(),
                            num_workers=num_workers)
 
-'''
 
-The dataset_name should contain the folder with the images concatenating landmarks on left and segmented face on the right
-Command example
-python main.py train_pix2pix --data_dir lib/datasets/CelebA/celeba/img/ --log_dir logs/ --models_dir lib/models/ --output_dir results/15_02/ --dataset_name FacialLandmarks478/ 
-'''
 def train_pix2pix(data_dir: str, log_dir: str, models_dir: str, output_dir: str, dataset_name: str,
-                  epoch: int = 0, n_epochs: int = 100, batch_size: int = 32, lr: float = 0.0002,
+                  epoch: int = 0, n_epochs: int = 50, batch_size: int = 32, lr: float = 0.00005,
                   b1: float = 0.5, b2: float = 0.999, n_cpu: int = 8, img_size: int = 512,
-                  checkpoint_interval: int = 1835, device: int = 0):
+                  checkpoint_interval: int = 1352, device: int = 0):
     """
     Train the pix2pix GAN for generating faces based on given landmarks.
     @param data_dir: The root path to the data folder.
@@ -124,6 +119,9 @@ def train_pix2pix(data_dir: str, log_dir: str, models_dir: str, output_dir: str,
     else:
         model = Pix2Pix(data_dir, models_dir, out_dir, n_epochs, dataset_name, batch_size, lr, b1,
                         b2, n_cpu, img_size, device)
+    #device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
+    #summary(model().to(device), (3, 256, 256), 1, device.type)
+    #exit()
     trainer = setup(model, log_dir, models_dir, n_epochs, device, 
                     checkpoint_interval=checkpoint_interval)
     trainer.fit(model, ckpt_path=resume_ckpt)
@@ -138,7 +136,7 @@ def train_classifier(data_dir: str, num_classes: int, learning_rate: float = 0.0
     Run the training.
     @param data_dir:
     @param num_classes:
-    @param learning_rate: The learning rate.a
+    @param learning_rate: The learning rate.
     @param batch_size: The batch size.
     @param n_epochs: The number of epochs to train.
     @param device: The device to work on.
@@ -171,8 +169,8 @@ def train_classifier(data_dir: str, num_classes: int, learning_rate: float = 0.0
     eval_classifier(models_dir, data_dir, batch_size, device, output_dir, num_workers)
 
 
-def anonymize_image(model_file: str, input_file: str, output_file: str, mesh_configuration: str='04_iris_elipse',
-                    img_size: int = 512, align: bool = True, device: int = 0):
+def anonymize_image(model_file: str, input_file: str, output_file: str, img_size: int = 512,
+                    align: bool = True, device: int = 0):
     """
     Anonymize one face in a single image.
     @param model_file: The GANonymization model to be used for anonymization.
@@ -183,23 +181,46 @@ def anonymize_image(model_file: str, input_file: str, output_file: str, mesh_con
     @param device: The device to run the process on.
     """
     img = cv2.imread(input_file)
+
     if img is not None:
-        img = FaceCrop(align)(img)
-        if len(img) > 0:
-            img = img[0]
+        try:
+            img = FaceCrop(align)(img)[0]
+        except Exception as e:
+            print(f"Error in FaceCrop: {e}")
+        
+        try:
             img = ZeroPaddingResize(img_size)(img)
-            img = FacialLandmarks478()(img, mesh_configuration)
+        except Exception as e:
+            print(f"Error in ZeroPaddingResize: {e}")
+        
+        try:
+            img = FacialLandmarks478()(img)
+        except Exception as e:
+            print(f"Error in FacialLandmarks478: {e}")
+        
+        try:
             img = Pix2PixTransformer(model_file, img_size, device)(img)
+        except Exception as e:
+            print(f"Error in Pix2PixTransformer: {e}")
+        
+        try:
             os.makedirs(os.path.dirname(output_file), exist_ok=True)
-            img = normalize_image(img)
+            img = normalize_image(img)  
             cv2.imwrite(output_file, img)
-        else:
-            print("no face")
-    else:
-        print("None image")
-    
-def anonymize_directory(model_file: str, input_directory: str, output_directory: str, mesh_configuration: str='00_pkb',
-                        img_size: int = 512, align: bool = True, device: int = 0, ):
+        except Exception as e:
+            print(f"Error in making directories: {e}")
+        '''
+        try:
+            img = normalize_image(img)
+        except Exception as e:
+            print(f"Error in normalize_image: {e}")
+        '''
+
+        
+
+
+def anonymize_directory(model_file: str, input_directory: str, output_directory: str,
+                        img_size: int = 512, align: bool = True, device: int = 0):
     """
     Anonymize a set of images in a directory.
     @param model_file: The GANonymization model to be used for anonymization.
@@ -212,23 +233,9 @@ def anonymize_directory(model_file: str, input_directory: str, output_directory:
     for file in tqdm(os.listdir(input_directory), desc=f"Anonymizing from {input_directory}"):
         input_file = os.path.join(input_directory, file)
         output_file = os.path.join(output_directory, os.path.basename(file))
-        anonymize_image(model_file, input_file, output_file, mesh_configuration, img_size, align, device)
+        #print(input_file, output_file)
+        anonymize_image(model_file, input_file, output_file, img_size, align, device)
 
-def custom_preprocess(input_path: str, mesh_configuration: str='00_pkb', img_size: int = 512, align: bool = True, test_size: float = 0.1,
-               shuffle: bool = True, output_dir: str = None, num_workers: int = 8):
-    output_dir = input_path+'/FaceSegmentation'
-    output_dir = transform(output_dir, img_size, True, FacialLandmarks478(), mesh_configuration,
-                        num_workers=num_workers)
-
-
-def anonymize_all(folder_path: str):
-    # List all folders in the source folder
-    folders = [name for name in os.listdir(folder_path) if os.path.isdir(os.path.join(folder_path, name))]
-    folders.sort()
-
-    for folder in folders:
-        print(folder_path+'/'+folder)
-        anonymize_directory("baseline/00_pkb_21_02.ckpt", folder_path+'/'+folder,  "../MetaGazeGANonymization/"+folder)
 
 if __name__ == '__main__':
     fire.Fire()

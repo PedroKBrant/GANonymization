@@ -45,7 +45,7 @@ def exec_augmentation(files: List[str], output_dir: str, input_dir: str, size: i
         if img is not None:
             if name == 'FacialLandmarks478':
                 print('ENTREI AQUI FacialLandmarks478')
-                mesh_configuration = '05_pkb'#TODO FIX THIS
+                mesh_configuration = '00_pkb'#TODO FIX THIS
                 print(mesh_configuration)
                 pred = transformer(img, mesh_configuration)
             else:

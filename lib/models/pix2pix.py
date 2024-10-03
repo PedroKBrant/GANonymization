@@ -291,3 +291,4 @@ class Pix2Pix(pytorch_lightning.LightningModule):
             shuffle=True,
             num_workers=self.n_cpu,
         )
+    

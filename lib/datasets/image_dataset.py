@@ -9,7 +9,8 @@ from torch.utils.data import Dataset
 from torchvision.transforms import Compose
 
 from lib.utils import glob_dir
-
+from PIL import ImageFile
+ImageFile.LOAD_TRUNCATED_IMAGES = True
 
 class ImageDataset(Dataset):
     """
